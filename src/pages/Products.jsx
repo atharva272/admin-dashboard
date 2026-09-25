@@ -30,21 +30,13 @@ const Products = () => {
 
   const validLimits = [10, 20, 50];
 
-  const limit = validLimits.includes(limitFromUrl)
-    ? limitFromUrl
-    : 10;
+  const limit = validLimits.includes(limitFromUrl) ? limitFromUrl : 10;
 
   const [searchInput, setSearchInput] = useState(searchFromUrl);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(total / limit)
-  );
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const page = Math.min(
-    Math.max(pageFromUrl, 1),
-    totalPages
-  );
+  const page = Math.min(Math.max(pageFromUrl, 1), totalPages);
 
   const skip = (page - 1) * limit;
 
@@ -70,8 +62,7 @@ const Products = () => {
   // Search debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      const currentSearch =
-        searchParams.get("search") || "";
+      const currentSearch = searchParams.get("search") || "";
 
       if (searchInput === currentSearch) {
         return;
@@ -107,19 +98,13 @@ const Products = () => {
         if (searchFromUrl.trim()) {
           data = await searchProducts(
             searchFromUrl,
-            limit,
-            skip,
-            sortFromUrl,
-            controller.signal
+            0,
+            0,
+            "",
+            controller.signal,
           );
         } else {
-          data = await getProducts(
-            limit,
-            skip,
-            categoryFromUrl,
-            sortFromUrl,
-            controller.signal
-          );
+          data = await getProducts(0, 0, "", "", controller.signal);
         }
 
         if (controller.signal.aborted) {
@@ -130,43 +115,36 @@ const Products = () => {
 
         // Get locally added/edited products
         const localProducts = JSON.parse(
-          localStorage.getItem("customProducts") || "[]"
+          localStorage.getItem("customProducts") || "[]",
         );
 
         // Get locally deleted product IDs
         const deletedProducts = JSON.parse(
-          localStorage.getItem("deletedProducts") || "[]"
+          localStorage.getItem("deletedProducts") || "[]",
         );
 
         // Remove deleted products
         apiProducts = apiProducts.filter(
-          (product) =>
-            !deletedProducts.includes(product.id)
+          (product) => !deletedProducts.includes(product.id),
         );
 
         // Replace API products with locally edited versions
         apiProducts = apiProducts.map((product) => {
           const localProduct = localProducts.find(
-            (item) =>
-              String(item.id) === String(product.id)
+            (item) => String(item.id) === String(product.id),
           );
 
           return localProduct || product;
         });
 
         // Add locally created products
-        const apiIds = new Set(
-          apiProducts.map((product) => product.id)
-        );
+        const apiIds = new Set(apiProducts.map((product) => product.id));
 
         const newLocalProducts = localProducts.filter(
-          (product) => !apiIds.has(product.id)
+          (product) => !apiIds.has(product.id),
         );
 
-        let finalProducts = [
-          ...newLocalProducts,
-          ...apiProducts,
-        ];
+        let finalProducts = [...newLocalProducts, ...apiProducts];
 
         // Search locally saved products too
         if (searchFromUrl.trim()) {
@@ -174,30 +152,22 @@ const Products = () => {
 
           finalProducts = finalProducts.filter(
             (product) =>
-              product.title
-                ?.toLowerCase()
-                .includes(query) ||
-              product.description
-                ?.toLowerCase()
-                .includes(query) ||
-              product.category
-                ?.toLowerCase()
-                .includes(query)
+              product.title?.toLowerCase().includes(query) ||
+              product.description?.toLowerCase().includes(query) ||
+              product.category?.toLowerCase().includes(query),
           );
         }
 
         // Category filter
         if (categoryFromUrl) {
           finalProducts = finalProducts.filter(
-            (product) =>
-              product.category === categoryFromUrl
+            (product) => product.category === categoryFromUrl,
           );
         }
 
         // Sorting
         if (sortFromUrl) {
-          const [sortBy, order] =
-            sortFromUrl.split("-");
+          const [sortBy, order] = sortFromUrl.split("-");
 
           finalProducts.sort((a, b) => {
             let valueA = a[sortBy];
@@ -231,21 +201,13 @@ const Products = () => {
         const start = skip;
         const end = skip + limit;
 
-        setProducts(
-          finalProducts.slice(start, end)
-        );
+        setProducts(finalProducts.slice(start, end));
       } catch (error) {
-        if (
-          error.name === "CanceledError" ||
-          error.code === "ERR_CANCELED"
-        ) {
+        if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
           return;
         }
 
-        setError(
-          error.response?.data?.message ||
-            "Failed to load products"
-        );
+        setError(error.response?.data?.message || "Failed to load products");
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -258,18 +220,10 @@ const Products = () => {
     return () => {
       controller.abort();
     };
-  }, [
-    page,
-    limit,
-    searchFromUrl,
-    categoryFromUrl,
-    sortFromUrl,
-  ]);
+  }, [page, limit, searchFromUrl, categoryFromUrl, sortFromUrl]);
 
   const updateUrl = (key, value) => {
-    const params = new URLSearchParams(
-      searchParams
-    );
+    const params = new URLSearchParams(searchParams);
 
     if (value) {
       params.set(key, value);
@@ -285,11 +239,7 @@ const Products = () => {
   };
 
   const handlePageChange = (newPage) => {
-    if (
-      newPage < 1 ||
-      newPage > totalPages ||
-      newPage === page
-    ) {
+    if (newPage < 1 || newPage > totalPages || newPage === page) {
       return;
     }
 
@@ -314,7 +264,7 @@ const Products = () => {
 
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this product?"
+      "Are you sure you want to delete this product?",
     );
 
     if (!confirmed) {
@@ -328,45 +278,35 @@ const Products = () => {
       try {
         await deleteProduct(id);
       } catch (error) {
-        console.log(
-          "DummyJSON delete simulated"
-        );
+        console.log("DummyJSON delete simulated");
       }
 
       // Save deleted ID
       const deletedProducts = JSON.parse(
-        localStorage.getItem("deletedProducts") ||
-          "[]"
+        localStorage.getItem("deletedProducts") || "[]",
       );
 
       if (!deletedProducts.includes(id)) {
         deletedProducts.push(id);
       }
 
-      localStorage.setItem(
-        "deletedProducts",
-        JSON.stringify(deletedProducts)
-      );
+      localStorage.setItem("deletedProducts", JSON.stringify(deletedProducts));
 
       // Remove from locally saved products
       const localProducts = JSON.parse(
-        localStorage.getItem("customProducts") ||
-          "[]"
+        localStorage.getItem("customProducts") || "[]",
       );
 
-      const updatedLocalProducts =
-        localProducts.filter(
-          (product) => product.id !== id
-        );
+      const updatedLocalProducts = localProducts.filter(
+        (product) => product.id !== id,
+      );
 
       localStorage.setItem(
         "customProducts",
-        JSON.stringify(updatedLocalProducts)
+        JSON.stringify(updatedLocalProducts),
       );
 
-      setProducts((prev) =>
-        prev.filter((product) => product.id !== id)
-      );
+      setProducts((prev) => prev.filter((product) => product.id !== id));
 
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
@@ -385,27 +325,16 @@ const Products = () => {
     });
   };
 
-  const startItem =
-    total === 0 ? 0 : (page - 1) * limit + 1;
+  const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
 
-  const endItem = Math.min(
-    page * limit,
-    total
-  );
+  const endItem = Math.min(page * limit, total);
 
   const pageNumbers = [];
 
   const startPage = Math.max(1, page - 2);
-  const endPage = Math.min(
-    totalPages,
-    page + 2
-  );
+  const endPage = Math.min(totalPages, page + 2);
 
-  for (
-    let i = startPage;
-    i <= endPage;
-    i++
-  ) {
+  for (let i = startPage; i <= endPage; i++) {
     pageNumbers.push(i);
   }
 
@@ -414,13 +343,9 @@ const Products = () => {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Admin Dashboard
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
 
-            <p className="text-sm text-gray-500">
-              Product Management
-            </p>
+            <p className="text-sm text-gray-500">Product Management</p>
           </div>
 
           <button
@@ -435,19 +360,13 @@ const Products = () => {
       <main className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Products
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Products</h2>
 
-            <p className="text-sm text-gray-500">
-              Manage your products
-            </p>
+            <p className="text-sm text-gray-500">Manage your products</p>
           </div>
 
           <button
-            onClick={() =>
-              navigate("/products/add")
-            }
+            onClick={() => navigate("/products/add")}
             className="rounded-md bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700"
           >
             + Add Product
@@ -481,26 +400,18 @@ const Products = () => {
                 disabled={Boolean(searchFromUrl)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none disabled:bg-gray-100"
               >
-                <option value="">
-                  All Categories
-                </option>
+                <option value="">All Categories</option>
 
                 {categories.map((category) => (
                   <option
                     key={
-                      typeof category === "string"
-                        ? category
-                        : category.slug
+                      typeof category === "string" ? category : category.slug
                     }
                     value={
-                      typeof category === "string"
-                        ? category
-                        : category.slug
+                      typeof category === "string" ? category : category.slug
                     }
                   >
-                    {typeof category === "string"
-                      ? category
-                      : category.name}
+                    {typeof category === "string" ? category : category.name}
                   </option>
                 ))}
               </select>
@@ -516,25 +427,15 @@ const Products = () => {
                 onChange={handleSortChange}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none"
               >
-                <option value="">
-                  Default
-                </option>
+                <option value="">Default</option>
 
-                <option value="price-asc">
-                  Price: Low to High
-                </option>
+                <option value="price-asc">Price: Low to High</option>
 
-                <option value="price-desc">
-                  Price: High to Low
-                </option>
+                <option value="price-desc">Price: High to Low</option>
 
-                <option value="rating-desc">
-                  Rating: High to Low
-                </option>
+                <option value="rating-desc">Rating: High to Low</option>
 
-                <option value="title-asc">
-                  Title: A-Z
-                </option>
+                <option value="title-asc">Title: A-Z</option>
               </select>
             </div>
           </div>
@@ -542,9 +443,7 @@ const Products = () => {
 
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-600">
-              {error}
-            </p>
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
@@ -568,29 +467,17 @@ const Products = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr className="border-b text-left text-sm text-gray-600">
-                    <th className="px-4 py-3">
-                      Product
-                    </th>
+                    <th className="px-4 py-3">Product</th>
 
-                    <th className="px-4 py-3">
-                      Category
-                    </th>
+                    <th className="px-4 py-3">Category</th>
 
-                    <th className="px-4 py-3">
-                      Price
-                    </th>
+                    <th className="px-4 py-3">Price</th>
 
-                    <th className="px-4 py-3">
-                      Rating
-                    </th>
+                    <th className="px-4 py-3">Rating</th>
 
-                    <th className="px-4 py-3">
-                      Stock
-                    </th>
+                    <th className="px-4 py-3">Stock</th>
 
-                    <th className="px-4 py-3">
-                      Actions
-                    </th>
+                    <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
 
@@ -609,11 +496,7 @@ const Products = () => {
                           />
 
                           <button
-                            onClick={() =>
-                              navigate(
-                                `/products/${product.id}`
-                              )
-                            }
+                            onClick={() => navigate(`/products/${product.id}`)}
                             className="font-medium text-gray-900 hover:text-blue-600"
                           >
                             {product.title}
@@ -629,21 +512,15 @@ const Products = () => {
                         ${product.price}
                       </td>
 
-                      <td className="px-4 py-4 text-sm">
-                        ⭐ {product.rating}
-                      </td>
+                      <td className="px-4 py-4 text-sm">⭐ {product.rating}</td>
 
-                      <td className="px-4 py-4 text-sm">
-                        {product.stock}
-                      </td>
+                      <td className="px-4 py-4 text-sm">{product.stock}</td>
 
                       <td className="px-4 py-4">
                         <div className="flex gap-2">
                           <button
                             onClick={() =>
-                              navigate(
-                                `/products/edit/${product.id}`
-                              )
+                              navigate(`/products/edit/${product.id}`)
                             }
                             className="rounded-md bg-blue-100 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-200"
                           >
@@ -651,17 +528,11 @@ const Products = () => {
                           </button>
 
                           <button
-                            onClick={() =>
-                              handleDelete(product.id)
-                            }
-                            disabled={
-                              deleteLoading ===
-                              product.id
-                            }
+                            onClick={() => handleDelete(product.id)}
+                            disabled={deleteLoading === product.id}
                             className="rounded-md bg-red-100 px-3 py-1.5 text-sm text-red-700 hover:bg-red-200 disabled:opacity-50"
                           >
-                            {deleteLoading ===
-                            product.id
+                            {deleteLoading === product.id
                               ? "Deleting..."
                               : "Delete"}
                           </button>
@@ -682,15 +553,12 @@ const Products = () => {
               <strong>
                 {startItem}–{endItem}
               </strong>{" "}
-              of{" "}
-              <strong>{total}</strong>
+              of <strong>{total}</strong>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button
-                onClick={() =>
-                  handlePageChange(page - 1)
-                }
+                onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
                 className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -700,9 +568,7 @@ const Products = () => {
               {pageNumbers.map((number) => (
                 <button
                   key={number}
-                  onClick={() =>
-                    handlePageChange(number)
-                  }
+                  onClick={() => handlePageChange(number)}
                   className={`rounded-md px-3 py-2 text-sm ${
                     page === number
                       ? "bg-blue-600 text-white"
@@ -714,9 +580,7 @@ const Products = () => {
               ))}
 
               <button
-                onClick={() =>
-                  handlePageChange(page + 1)
-                }
+                onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
                 className="rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -728,17 +592,11 @@ const Products = () => {
                 onChange={handleLimitChange}
                 className="rounded-md border px-3 py-2 text-sm"
               >
-                <option value="10">
-                  10 / page
-                </option>
+                <option value="10">10 / page</option>
 
-                <option value="20">
-                  20 / page
-                </option>
+                <option value="20">20 / page</option>
 
-                <option value="50">
-                  50 / page
-                </option>
+                <option value="50">50 / page</option>
               </select>
             </div>
           </div>
